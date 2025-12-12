@@ -88,13 +88,24 @@ if hicp_series is not None and lci_series is not None:
     hicp_series = hicp_series[(hicp_series.index >= start_date) & (hicp_series.index <= end_date)]
     lci_series = lci_series[(lci_series.index >= start_date) & (lci_series.index <= end_date)]
     
+    # RESAMPLING: The user requested to "drop values between a quarter" rather than averaging.
+    # Since LCI indices are Jan 1, Apr 1... (checking our parsing), and HICP has these + Feb, Mar...
+    # We can simple intersect indices. This selects the Month corresponding to the Quarter start.
+    print(f"Selecting HICP values matching LCI quarters (dropping intermediate months)...")
+    # hicp_series = hicp_series.resample('QS').mean() # OLD METHOD
+    
+    # Ensure they are exactly the same size/index intersection again after resampling
+    common_idx = hicp_series.index.intersection(lci_series.index)
+    hicp_series = hicp_series.loc[common_idx]
+    lci_series = lci_series.loc[common_idx]
+    
     hicp_vals = hicp_series.values
     lci_vals = lci_series.values
 else:
     hicp_vals = hicp_vals_initial
     lci_vals = lci_vals_initial
 
-print("\n--- RESULTS (Aligned) ---")
+print("\n--- RESULTS (Aligned & Subset) ---")
 if hicp_vals is not None:
     print(f"HICP Array Shape: {hicp_vals.shape}")
     print(f"First 10: {hicp_vals[:10]}")
@@ -109,10 +120,10 @@ if hicp_series is not None and lci_series is not None:
     plt.figure(figsize=(12, 6))
     
     # Plot using the series index (dates) so they align correctly
-    plt.plot(hicp_series.index, hicp_vals, label='HICP (Monthly)', color='blue', alpha=0.7)
+    plt.plot(hicp_series.index, hicp_vals, label='HICP (First Month of Q)', color='blue', marker='x', linestyle='-')
     plt.plot(lci_series.index, lci_vals, label='LCI (Quarterly)', color='red', marker='o', linestyle='--')
     
-    plt.title(f"Hungary HICP vs LCI ({start_date.year}-{end_date.year}) - Aligned")
+    plt.title(f"Hungary HICP vs LCI ({start_date.year}-{end_date.year}) - Quarterly Aligned (Subset)")
     plt.xlabel("Date")
     plt.ylabel("Index")
     plt.grid(True)
@@ -123,3 +134,7 @@ if hicp_series is not None and lci_series is not None:
     print(f"Plot saved to: {out_file}")
 else:
     print("Cannot plot: one or both series missing.")
+
+
+
+print(lci_series.shape)
