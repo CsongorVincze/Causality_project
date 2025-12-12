@@ -60,6 +60,9 @@ def extract_series(dataset_code, geo_filter, unit_list, cat_col, cat_list, start
     
     if df_series.empty: return None, "Empty after date filter"
 
+
+
+
     # Data
     s_data = df_series.iloc[:, 0]
     s_data = pd.to_numeric(s_data, errors='coerce').dropna()
